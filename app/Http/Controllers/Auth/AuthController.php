@@ -11,9 +11,18 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Passport\RefreshTokenRepository;
 use Laravel\Passport\TokenRepository;
+use App\Services\OtpService;
+
 
 class AuthController extends Controller
 {
+    protected $otpService;
+
+    public function __construct(OtpService $otpService)
+    {
+        $this->otpService = $otpService;
+    }
+
     // Register a new user
     public function register(Request $request)
     {
@@ -33,6 +42,8 @@ class AuthController extends Controller
             'password' => bcrypt($request->password),
         ]);
 
+        $this->otpService->generateAndSend($user);
+
         return response()->json(['message' => 'User registered successfully.'], 201);
     }
 
@@ -46,6 +57,12 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !$user->email_verified) {
+            return response()->json(['message' => 'Email is not verified.'], 403);
         }
 
         $credentials = $request->only('email', 'password');
@@ -105,6 +122,60 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Please verify your inputs and try again.',
         ]);
+    }
+
+    // verify otp
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp'   => 'required|string'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        if ($user->email_verified) {
+            return response()->json(['message' => 'User already verified.'], 200);
+        }
+
+        if (!$this->otpService->verify($user, $request->otp)) {
+            return response()->json(['message' => 'Invalid or expired OTP.'], 400);
+        }
+
+        $user->update([
+            'email_verified' => true,
+            'email_otp' => null,
+            'email_otp_expires_at' => null,
+        ]);
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
+    // resend OTP
+    public function resendOtp(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        if ($user->email_verified) {
+            return response()->json(['message' => 'Email already verified.'], 200);
+        }
+
+        if (!$this->otpService->canResend($user)) {
+            return response()->json(['message' => 'OTP recently sent. Please wait before resending.'], 429);
+        }
+
+        $this->otpService->generateAndSend($user);
+
+        return response()->json(['message' => 'OTP has been resent to your email.']);
     }
 
     // Logout
