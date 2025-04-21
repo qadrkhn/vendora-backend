@@ -68,5 +68,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 ## Running this project
 - Run `php artisan migrate`.
-If you haven't run `php artisan passport:keys`, please do before proceeding.
+- Run `php artisan db:seed`.
+If you haven't run `php artisan passport:keys`, please do so before proceeding.
 - Run `php artisan passport:client --password`.

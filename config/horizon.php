@@ -70,7 +70,10 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => [
+        'web',
+        'auth',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -170,6 +173,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Allowed emails
+    |--------------------------------------------------------------------------
+    |
+    | These are the only emails allowed to access the horizon dashboard at /horizon
+    |
+    */
+    'allowed_emails' => explode(',', env('HORIZON_ALLOWED_EMAILS')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Worker Configuration
     |--------------------------------------------------------------------------
     |
@@ -193,6 +206,19 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+        'supervisor-otp' => [
+            'connection' => 'redis',
+            'queue' => ['otp'],
+            'balance' => 'simple',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 3,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 2,
+            'timeout' => 30,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -202,10 +228,18 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-otp' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'maxProcesses' => 3,
+            ],
+            'supervisor-otp' => [
                 'maxProcesses' => 3,
             ],
         ],

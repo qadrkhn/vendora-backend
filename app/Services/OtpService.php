@@ -10,6 +10,8 @@ use Carbon\Carbon;
 
 class OtpService
 {
+    public string $queue = 'otp';
+
     protected int $otpExpiryMinutes = 10;
 
     public function generateAndSend(User $user): void
