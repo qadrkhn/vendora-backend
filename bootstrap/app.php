@@ -15,10 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         // custom logic to send 401 to api access without tokens
+        // or just to home page in case of web
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->expectsJson()) {
                 abort(response()->json(['message' => 'Unauthenticated.'], 401));
             }
+            return route('home');
         });
 
     })

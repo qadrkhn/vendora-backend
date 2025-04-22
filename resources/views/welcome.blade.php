@@ -21,5 +21,6 @@
     </head>
     <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
         <h1 class="text-white">Vendora Backend</h1>
+        <h2 class="text-white">Add frontend URL here: <a href="/login">Frontend</a></h2> <!-- TODO -->
     </body>
 </html>
