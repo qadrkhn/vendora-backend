@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -35,6 +36,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
                 return response()->view('errors.401', [], 401);
+            }
+
+            // Handle 429 Rate Limiting error (Too Many Requests)
+            if ($e instanceof ThrottleRequestsException) {
+                if ($request->expectsJson()) {
+                    $imageUrl = asset('429_Response.png');
+                    return response()->json([
+                        'message' => "Too many requests. Please try again later. {$imageUrl}"
+                    ], 429);
+                }
             }
         });
     })->create();

@@ -180,7 +180,7 @@ class AuthController extends Controller
         }
 
         if ($user->email_verified) {
-            return response()->json(['message' => 'Email already verified.'], 400);
+            return response()->json(['message' => 'Email already verified.'], 403);
         }
 
         if (!$this->otpService->verify($user, $request->otp)) {
@@ -209,7 +209,7 @@ class AuthController extends Controller
         }
 
         if ($user->email_verified) {
-            return response()->json(['message' => 'Email already verified.'], 200);
+            return response()->json(['message' => 'Email already verified.'], 403);
         }
 
         if (!$this->otpService->canResend($user)) {
