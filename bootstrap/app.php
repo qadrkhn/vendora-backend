@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->group('api', [
+            \App\Http\Middleware\AttachAccessTokenFromCookie::class,
+        ]);
+
         // custom logic to send 401 to api access without tokens
         // or just to home page in case of web
         $middleware->redirectGuestsTo(function (Request $request) {

@@ -1,17 +1,20 @@
 <?php
 
-
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Laravel\Passport\RefreshTokenRepository;
 use Laravel\Passport\TokenRepository;
+use Symfony\Component\HttpFoundation\Cookie;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\OtpService;
+use App\Enums\AuthProvider;
 
 
 class AuthController extends Controller
@@ -36,15 +39,30 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $this->otpService->generateAndSend($user);
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => bcrypt($request->password),
+                'auth_provider' => AuthProvider::EMAIL,
+                'role' => 'user'
+            ]);
 
-        return response()->json(['message' => 'User registered successfully.'], 201);
+            $this->otpService->generateAndSend($user);
+
+            DB::commit();
+
+            return response()->json(['message' => 'User registered successfully.'], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Registration failed. Please try again later.'
+            ], 500);
+        }
     }
 
     // Login with password grant (returns access & refresh token)
@@ -61,7 +79,9 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !$user->email_verified) {
+        if (!$user) {
+            return response()->json(['message' => 'Account does not exist. Please create an account before logging in.'], 403);
+        } elseif(!$user->email_verified) {
             return response()->json(['message' => 'Email is not verified.'], 403);
         }
 
@@ -85,12 +105,34 @@ class AuthController extends Controller
         if ($response->getStatusCode() !== 200) {
             return response()->json(['message' => $data['message'] ?? 'Invalid credentials'], $response->getStatusCode());
         }
-        $responseData['tokens'] = $data;
-        $responseData['user'] = Auth::user();
 
-        return response()->json(
-            $responseData
+        $accessTokenCookie = cookie(
+            'access_token',
+            $data['access_token'],
+            60,
+            null,
+            null,
+            true,
+            true,
+            false,
+            'Strict'
         );
+
+        $refreshTokenCookie = cookie(
+            'refresh_token',
+            $data['refresh_token'],
+            43200,
+            null,
+            null,
+            true,
+            true,
+            false,
+            'Strict'
+        );
+
+        return response()->json([
+            'user' => Auth::user(),
+        ])->withCookie($accessTokenCookie)->withCookie($refreshTokenCookie);
     }
 
     // Refresh token
@@ -138,7 +180,7 @@ class AuthController extends Controller
         }
 
         if ($user->email_verified) {
-            return response()->json(['message' => 'User already verified.'], 200);
+            return response()->json(['message' => 'Email already verified.'], 400);
         }
 
         if (!$this->otpService->verify($user, $request->otp)) {
@@ -149,6 +191,7 @@ class AuthController extends Controller
             'email_verified' => true,
             'email_otp' => null,
             'email_otp_expires_at' => null,
+            'email_verified_at' => now()
         ]);
 
         return response()->json(['message' => 'Email verified successfully.']);
@@ -186,6 +229,12 @@ class AuthController extends Controller
         app(RefreshTokenRepository::class)->revokeRefreshTokensByAccessTokenId($accessToken->id);
         app(TokenRepository::class)->revokeAccessToken($accessToken->id);
 
-        return response()->json(['message' => 'Successfully logged out.']);
+        // Clear cookies
+        $clearAccessToken = cookie('access_token', '', -1);
+        $clearRefreshToken = cookie('refresh_token', '', -1);
+
+        return response()->json(['message' => 'Successfully logged out.'])
+            ->withCookie($clearAccessToken)
+            ->withCookie($clearRefreshToken);
     }
 }

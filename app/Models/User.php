@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use App\Enums\AuthProvider;
 
 class User extends Authenticatable
 {
@@ -22,9 +23,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'auth_provider',
         'email_otp',
         'email_otp_expires_at',
         'email_verified',
+        'email_verified_at',
     ];
 
     /**
@@ -47,6 +51,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'email_verified' => 'boolean'
         ];
     }
+
+
+    public function isGoogleUser(): bool
+    {
+        return $this->auth_provider === AuthProvider::GOOGLE;
+    }
+
+    public function isEmailUser(): bool
+    {
+        return $this->auth_provider === AuthProvider::EMAIL;
+    }
+
 }
