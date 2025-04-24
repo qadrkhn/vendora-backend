@@ -16,8 +16,6 @@ class RouteServiceProvider extends ServiceProvider
     {
         // Define rate limit for verifying OTP
         RateLimiter::for('verify-otp', function (Request $request) {
-            \Log::info($request->ip());
-            \Log::info($request->input('email'));
             return Limit::perMinute(5)->by($request->ip() . '|' . $request->input('email'));
         });
 

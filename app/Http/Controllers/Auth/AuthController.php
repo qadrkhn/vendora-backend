@@ -47,7 +47,7 @@ class AuthController extends Controller
                 'email'    => $request->email,
                 'password' => bcrypt($request->password),
                 'auth_provider' => AuthProvider::EMAIL,
-                'role' => 'user'
+                'role' => 'USER'
             ]);
 
             $this->otpService->generateAndSend($user);

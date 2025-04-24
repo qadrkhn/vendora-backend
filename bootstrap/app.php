@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -19,33 +20,46 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\AttachAccessTokenFromCookie::class,
         ]);
 
-        // custom logic to send 401 to api access without tokens
-        // or just to home page in case of web
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->expectsJson()) {
                 abort(response()->json(['message' => 'Unauthenticated.'], 401));
             }
             return route('home');
         });
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (HttpException $e, $request) {
+
+        // 401: Token expired/invalid (Passport fallback)
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated. Invalid or expired token.',
+                ], 401)->withCookie(cookie()->forget('access_token'));
+            }
+
+            return redirect()->route('login');
+        });
+
+        // 403: Access forbidden
+        $exceptions->render(function (HttpException $e, Request $request) {
             if ($e->getStatusCode() === 403) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
                 return response()->view('errors.401', [], 401);
             }
-
-            // Handle 429 Rate Limiting error (Too Many Requests)
-            if ($e instanceof ThrottleRequestsException) {
-                if ($request->expectsJson()) {
-                    $imageUrl = asset('429_Response.png');
-                    return response()->json([
-                        'message' => "Too many requests. Please try again later. {$imageUrl}"
-                    ], 429);
-                }
-            }
         });
+
+        // 429: Too many requests (Throttle)
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Too many requests. Please try again later.',
+                    'hint' => asset('429_Response.png'), // Optional fun hint image
+                ], 429);
+            }
+
+            return response()->view('errors.429', [], 429);
+        });
+
     })->create();

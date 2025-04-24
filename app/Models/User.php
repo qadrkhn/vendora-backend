@@ -23,12 +23,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'picture',
         'role',
         'auth_provider',
         'email_otp',
         'email_otp_expires_at',
         'email_verified',
         'email_verified_at',
+        'set_password_at'
     ];
 
     /**
@@ -50,6 +52,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'set_password_at' => 'datetime',
             'password' => 'hashed',
             'email_verified' => 'boolean'
         ];
