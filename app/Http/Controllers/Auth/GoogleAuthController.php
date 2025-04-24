@@ -86,7 +86,10 @@ class GoogleAuthController extends Controller
                 true,
                 false,
                 'Strict'
+            )->cookie(
+                'has_token', '1', 60 * 24, '/', null, false, false, false, 'Strict'
             );
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

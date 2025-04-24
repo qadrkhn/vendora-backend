@@ -107,32 +107,20 @@ class AuthController extends Controller
         }
 
         $accessTokenCookie = cookie(
-            'access_token',
-            $data['access_token'],
-            60,
-            null,
-            null,
-            true,
-            true,
-            false,
-            'Strict'
+            'access_token', $data['access_token'], 60, null, null, true, true, false, 'Strict'
         );
 
         $refreshTokenCookie = cookie(
-            'refresh_token',
-            $data['refresh_token'],
-            43200,
-            null,
-            null,
-            true,
-            true,
-            false,
-            'Strict'
+            'refresh_token', $data['refresh_token'], 43200, null, null, true, true, false, 'Strict'
+        );
+
+        $hasToken = cookie(
+            'has_token', '1', 60 * 24, '/', null, false, false, false, 'Strict'
         );
 
         return response()->json([
             'user' => Auth::user(),
-        ])->withCookie($accessTokenCookie)->withCookie($refreshTokenCookie);
+        ])->withCookie($accessTokenCookie)->withCookie($refreshTokenCookie)->withCookie($hasToken);
     }
 
     // Refresh token
@@ -232,9 +220,11 @@ class AuthController extends Controller
         // Clear cookies
         $clearAccessToken = cookie('access_token', '', -1);
         $clearRefreshToken = cookie('refresh_token', '', -1);
+        $clearHasToken = cookie('has_token', '', -1);
 
         return response()->json(['message' => 'Successfully logged out.'])
             ->withCookie($clearAccessToken)
-            ->withCookie($clearRefreshToken);
+            ->withCookie($clearRefreshToken)
+            ->withCookie($clearHasToken);
     }
 }
