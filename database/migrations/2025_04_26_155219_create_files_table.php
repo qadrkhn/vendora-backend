@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('files', function (Blueprint $table) {
             $table->id();
 
-            $table->string('name');
-            $table->boolean('featured')->default(false);
+            $table->string('url');
+            $table->string('path');
+            $table->string('disk')->default('s3');
 
-            $table->string('url')->nullable();
+            $table->nullableMorphs('fileable');
 
             $table->timestamps();
         });
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('files');
     }
 };

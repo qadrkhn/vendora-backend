@@ -37,7 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401)->withCookie(cookie()->forget('access_token'));
             }
 
-            return redirect()->route('login');
+            return response()->view('errors.generic', [
+                'code' => 401,
+                'title' => '401 Unauthorized',
+                'message' => 'You are not authenticated or session expired. Please login and try again.'
+            ], 401);
         });
 
         // 403: Access forbidden
@@ -46,7 +50,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
-                return response()->view('errors.401', [], 401);
+                return response()->view('errors.generic', [
+                    'code' => 403,
+                    'title' => '403 Forbidden',
+                    'message' => 'You are not authorized to access this page.'
+                ], 403);
             }
         });
 
@@ -59,7 +67,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 429);
             }
 
-            return response()->view('errors.429', [], 429);
+            return response()->view('errors.generic', [
+                'code' => 429,
+                'title' => '429 Too many requests',
+                'message' => 'Too many requests. Please try again later.'
+            ], 403);
         });
 
     })->create();

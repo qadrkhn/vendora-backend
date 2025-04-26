@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Models\Category;
+namespace App\Models\File;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\File\File;
 
-class Category extends Model
+use App\Models\File\FileMetadata;
+
+class File extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -13,9 +14,14 @@ class Category extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'name',
         'url',
-        'featured',
+        'path',
+
+        'disk',
+
+        'fileable_id',
+        'fileable_type',
+
     ];
 
     /**
@@ -24,7 +30,10 @@ class Category extends Model
      * @var list<string>
      */
     protected $hidden = [
-
+        'disk',
+        'fileable_id',
+        'fileable_type',
+        'path'
     ];
 
     /**
@@ -37,13 +46,19 @@ class Category extends Model
         return [
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
-            'featured' => 'boolean'
         ];
     }
 
     // Relationships
-    public function files()
+    public function fileable()
     {
-        return $this->morphMany(File::class, 'fileable');
+        return $this->morphTo();
     }
+
+    public function metadata()
+    {
+        return $this->hasOne(FileMetadata::class);
+    }
+
+
 }

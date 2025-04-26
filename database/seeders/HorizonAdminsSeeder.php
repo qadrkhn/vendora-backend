@@ -25,7 +25,7 @@ class HorizonAdminsSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => 'Horizon Admin',
-                    'password' => Hash::make('secret'),
+                    'password' => Hash::make('secret'), // TODO add a secure password
                     'email_verified_at' => now(),
                     'email_verified' => true,
                     'role' => 'admin'

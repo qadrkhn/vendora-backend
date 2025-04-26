@@ -37,8 +37,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>401 Unauthorized</h1>
-        <p>You are not authorized to access this page.</p>
+        <h1>{{ $title ?? 'Access Denied' }}</h1>
+        <p>{{ $message ?? 'You do not have permission to access this page.' }}</p>
         <p>If you believe this is an error, please contact the system administrator.</p>
         <p><a href="{{ url('/') }}"><u>Go Back to Home</u></a></p>
         <h4>OR</h4>
