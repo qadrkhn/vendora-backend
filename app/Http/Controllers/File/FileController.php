@@ -41,7 +41,6 @@ class FileController extends Controller
             );
 
         } catch (\Throwable $e) {
-            report($e);
             return response()->error('File upload failed.', 500, $e->getMessage());
         }
     }
