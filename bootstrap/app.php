@@ -4,8 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -72,6 +74,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 'title' => '429 Too many requests',
                 'message' => 'Too many requests. Please try again later.'
             ], 403);
+        });
+
+        // 422: Validation exceptions
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors' => collect($e->errors())->map(fn ($messages) => $messages[0]),
+                ], 422);
+            }
         });
 
     })->create();

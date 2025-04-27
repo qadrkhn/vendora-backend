@@ -37,7 +37,7 @@ class CreateCategoryRequest extends FormRequest
             'name.required' => 'The category name is required.',
             'name.string' => 'The category name must be a valid string.',
             'name.max' => 'The category name may not be greater than 255 characters.',
-            'name.unique' => 'This category name already exists.',
+            'name.unique' => 'This category name is already taken.',
 
             'url.required' => 'The category URL is required.',
             'url.unique' => 'This category URL is already taken.',
